@@ -120,8 +120,6 @@ def load_level(filename):
     text_map = open(os.path.join('data', filename), 'r')
     level_map = list(map(str.strip, text_map))
     max_width = max(map(len, level_map))
-    for i in list(map(lambda line: list(line.ljust(max_width, '.')), level_map)):
-        print(i)
     return list(map(lambda line: list(line.ljust(max_width, '.')), level_map))
 
 
@@ -165,28 +163,7 @@ intro()
 camera = Camera()
 hero, max_x, max_y = new_level(map_level)
 camera.update()
-field_x, field_y = max_x, max_y
-print(field_x, field_y)
-
-
-def calibration(hero_x, hero_y):
-    if hero_x < 0:
-        hero_x += field_x + 1
-        for i in range(field_x):
-            sprite_group.shift("right")
-    elif hero_x > field_x:
-        hero_x -= field_x
-        for i in range(field_x):
-            sprite_group.shift("left")
-    if hero_y < 0:
-        hero_y += field_y + 1
-        for i in range(field_y):
-            sprite_group.shift("down")
-    elif hero_y > field_y:
-        hero_y -= field_y
-        for i in range(field_y):
-            sprite_group.shift("up")
-    return hero_x, hero_y
+field_x, field_y = max_x + 1, max_y + 1
 
 
 while running:
@@ -196,29 +173,38 @@ while running:
         elif event.type == pygame.KEYDOWN:
             x_hero, y_hero = hero.pos
             if event.key == pygame.K_UP:
-                if map_level[y_hero % field_y - 1][x_hero] == ".":
-                    x_hero, y_hero = calibration(x_hero, y_hero)
+                if map_level[(y_hero % field_y - 1) % field_y][x_hero % field_x] == ".":
                     y_hero -= 1
+                    if y_hero < 0:
+                        y_hero += field_y
+                        for i in range(field_y):
+                            sprite_group.shift("down")
                     sprite_group.shift("up")
-                    hero.move(x_hero, y_hero)
             elif event.key == pygame.K_DOWN:
-                if map_level[y_hero % field_y + 1][x_hero] == ".":
-                    x_hero, y_hero = calibration(x_hero, y_hero)
+                if map_level[(y_hero % field_y + 1) % field_y][x_hero % field_x] == ".":
                     y_hero += 1
+                    if y_hero >= field_y:
+                        y_hero -= field_y
+                        for i in range(field_y):
+                            sprite_group.shift("up")
                     sprite_group.shift("down")
-                    hero.move(x_hero, y_hero)
-            elif event.key == pygame.K_RIGHT:
-                if map_level[y_hero][x_hero % field_x + 1] == ".":
-                    x_hero, y_hero = calibration(x_hero, y_hero)
-                    x_hero += 1
-                    sprite_group.shift("right")
-                    hero.move(x_hero, y_hero)
             elif event.key == pygame.K_LEFT:
-                if map_level[y_hero][x_hero % field_x - 1] == ".":
-                    x_hero, y_hero = calibration(x_hero, y_hero)
+                if map_level[y_hero % field_y][(x_hero % field_x - 1) % field_x] == ".":
                     x_hero -= 1
+                    if x_hero < 0:
+                        x_hero += field_x
+                        for i in range(field_x):
+                            sprite_group.shift("right")
                     sprite_group.shift("left")
-                    hero.move(x_hero, y_hero)
+            elif event.key == pygame.K_RIGHT:
+                if map_level[y_hero % field_y][(x_hero % field_x + 1) % field_x] == ".":
+                    x_hero += 1
+                    if x_hero >= field_x:
+                        x_hero -= field_x
+                        for i in range(field_x):
+                            sprite_group.shift("left")
+                    sprite_group.shift("right")
+            hero.move(x_hero, y_hero)
 
     screen.fill('black')
     sprite_group.draw(screen)
